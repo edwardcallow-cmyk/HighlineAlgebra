@@ -1,3 +1,5 @@
+# Build JupyterLite and publish to GitHub Pages (gh-pages, root)
+# Triggers: pushes to main and manual dispatch
 name: Deploy JupyterLite site
 on:
   push:
@@ -5,8 +7,43 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: jupyterlite/jupyterlite-action@v1
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build with jupyterlite action
+        # Use the jupyterlite action to build the site. It typically outputs to ./output.
+        uses: jupyterlite/jupyterlite-action@v1
+        with:
+          # if your repo requires specific action inputs, add them here
+          # e.g. output_dir: output
+          # (leave empty if you rely on the action's defaults)
+
+      - name: Show build output (debug)
+        run: |
+          # list files so we can confirm the static site was produced
+          if [ -d ./output ]; then
+            echo "Contents of ./output:"
+            ls -la ./output
+          else
+            echo "No ./output directory found; listing repo root:"
+            ls -la
+          fi
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact for Pages
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: ./output
+
+      - name: Deploy to GitHub Pages (creates gh-pages branch and publishes)
+        uses: actions/deploy-pages@v2
