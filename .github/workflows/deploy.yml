@@ -26,7 +26,7 @@ jobs:
 
       - name: Install JupyterLite
         run: |
-          pip install "jupyterlite-core==0.6.4" "jupyterlite-pyodide-kernel==0.6.4"
+          pip install "jupyterlite-core==0.6.0" "jupyterlite-pyodide-kernel==0.6.0"
 
       - name: Build JupyterLite site
         run: |
