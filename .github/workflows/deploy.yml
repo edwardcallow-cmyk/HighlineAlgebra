@@ -6,29 +6,43 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # Build the JupyterLite site; default output dir is _output
-      - name: Build JupyterLite
-        uses: jupyterlite/action@v1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v4
+      - name: Install JupyterLite
+        run: |
+          pip install "jupyterlite-core==0.6.4" "jupyterlite-pyodide-kernel==0.5.1"
 
-      - name: Upload artifact for Pages
+      - name: Build JupyterLite site
+        run: |
+          jupyter lite build --contents contents --output-dir _site
+
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: _output
+          path: _site
 
-      - name: Deploy to GitHub Pages
-        id: deployment
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
         uses: actions/deploy-pages@v4
